@@ -1,0 +1,25 @@
+version: "3.3"
+services:
+  web:    
+    container_name: ImageApi
+    build:      
+      context: ..
+      dockerfile: ./ImageAPI/Dockerfile
+    depends_on: [ mongo ]        
+    volumes:
+      - /wwwroot
+    environment:
+      - MongoDbSettings:Host=mongo
+      - MongoDbSettings:Password=P4ssw#rd
+    ports:
+      - "5001:80"
+  mongo:
+    image: mongo
+    volumes:
+      - /data/db
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongoadmin
+      MONGO_INITDB_ROOT_PASSWORD: P4ssw#rd
+    ports:
+      - "27017:27017"
