@@ -7,6 +7,7 @@ using SixLabors.ImageSharp.Processing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace ImageAPI.Repository
 {
@@ -43,6 +44,7 @@ namespace ImageAPI.Repository
         {
 
             string extension = Path.GetExtension(file.FileName);
+            extension = extension.ToLower();
             if (!extension.Equals(".png", StringComparison.CurrentCultureIgnoreCase))
                 return false;
 
@@ -52,10 +54,13 @@ namespace ImageAPI.Repository
                 {
                     Directory.CreateDirectory(directory);
                 }
-
-                using FileStream fStream = File.Create(directory + "/Upload/" + id + extension);
-                var adjustedImage = await AdjustFile(file.OpenReadStream(),70);
+                using FileStream fStream = File.Create(Path.Combine (directory,id + extension));
+                Log.Logger.Information("length of file " + file.Length.ToString());
+                var adjustedImage = await AdjustFile(file.OpenReadStream(),50);
+                Log.Logger.Information("length of adjusted image "+adjustedImage.Length.ToString());
+                adjustedImage.Seek(0,SeekOrigin.Begin);
                 await adjustedImage.CopyToAsync(fStream);
+                Log.Logger.Information("length of adjusted fstream " + fStream.Length.ToString());
                 await fStream.FlushAsync();
                 return true;
             }

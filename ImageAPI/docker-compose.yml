@@ -7,19 +7,23 @@ services:
       dockerfile: ./ImageAPI/Dockerfile
     depends_on: [ mongo ]        
     volumes:
-      - /wwwroot
+      - files:/app/wwwroot
     environment:
       - MongoDbSettings:Host=mongo
       - MongoDbSettings:Password=P4ssw#rd
     ports:
       - "5001:80"
   mongo:
+    container_name: mongo
     image: mongo
     volumes:
-      - /data/db
+      - dbdata:/data/db
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: mongoadmin
       MONGO_INITDB_ROOT_PASSWORD: P4ssw#rd
     ports:
       - "27017:27017"
+volumes:
+    dbdata:
+    files:

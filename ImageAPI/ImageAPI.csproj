@@ -5,7 +5,7 @@
     <UserSecretsId>831fa373-4fb1-4b63-b1f8-110b8b688b74</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>.</DockerfileContext>
-    <DockerfileFile>..\Dockerfile</DockerfileFile> 
+    <DockerfileFile>.\Dockerfile</DockerfileFile> 
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +20,8 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\" />
+    <Folder Include="wwwroot\Logs\" />
+    <Folder Include="wwwroot\Upload\" />
   </ItemGroup>
 
 </Project>

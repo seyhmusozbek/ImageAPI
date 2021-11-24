@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -41,6 +42,7 @@ namespace ImageAPI.Controllers
         [HttpGet("{imgType}/{id}", Name = "thumbnail")]
         public async Task<IActionResult> GetAsType(string imgType, string id)
         {
+            string directory = "";
             try
             {
                 if (imgType!="thumbnail" && imgType!="small" && imgType!="large")
@@ -66,7 +68,8 @@ namespace ImageAPI.Controllers
                         break;
                 }
                 _iLogger.LogInformation($"Attempted to get the file id: {id}!");
-                string directory = _environment.WebRootPath + "/Upload/" + id + ".png";
+                 directory = Path.Combine(_environment.WebRootPath, "Upload");
+                directory = Path.Combine(directory, id + ".png");
                 var outputStream = await _fileManager.ResizeFile(directory, width, height);
                 var imgData = await _unitOfWork.image.Get(a => a.id == id);
 
@@ -75,13 +78,45 @@ namespace ImageAPI.Controllers
             catch (Exception ex)
             {
                 _iLogger.LogError(ex, "Failed to get the image!");
-                return BadRequest("Failed to get the image! Please check the logs.");
+                return BadRequest($"Failed to get the image{directory}! Please check the logs. {ex.Message}");
             }
+        }
+        [HttpGet]
+        public ActionResult GetFile(string id)
+        {
+            string directory = "";
+            try
+            {
+                string middle = id.Contains("og")?"Logs":"Upload";
+                directory = Path.Combine(_environment.WebRootPath, middle);
+                directory = Path.Combine(directory, id);
+
+                var bytes = System.IO.File.ReadAllBytes(directory);
+
+                return File(bytes, "application/octet-stream", id);
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest($"directory {directory}. Message {ex.Message} -------{ex}");
+            }
+            
+        }
+            [HttpGet]
+        public ActionResult GetAllFiles()
+        {
+            List<string> list = new List<string>();
+            foreach (string file in Directory.EnumerateFiles(_environment.WebRootPath, "*.*", SearchOption.AllDirectories))
+            {
+                list.Add(file);
+            }
+            return Ok(new {list= list,path=_environment.WebRootPath });
         }
 
         [HttpGet("{id}/{width}/{height}", Name = "GetAsSized")]
         public async Task<IActionResult> GetImageAsSized(string id, int width, int height)
         {
+            string directory = "";
             try
             {
                 _iLogger.LogInformation($"Attempted to get the file id: {id}!");
@@ -91,7 +126,8 @@ namespace ImageAPI.Controllers
                     return BadRequest("The height and width properties must be between 100 and 2048");
                 }
 
-                string directory = _environment.WebRootPath + "/Upload/" + id + ".png";
+                directory = Path.Combine(_environment.WebRootPath, "Upload");
+                directory = Path.Combine(directory, id + ".png");
                 var outputStream = await _fileManager.ResizeFile(directory,width,height);
                 var imgData = await _unitOfWork.image.Get(a => a.id == id);
 
@@ -100,11 +136,12 @@ namespace ImageAPI.Controllers
             catch (Exception ex)
             {
                 _iLogger.LogError(ex, "Failed to get the image!");
-                return BadRequest("Failed to get the image! Please check the logs.");
+                return BadRequest($"Failed to get the image{directory}! Please check the logs. {ex.Message}");
             }
         }
 
-        [HttpGet("{id}",Name ="GetMetaData")]
+
+            [HttpGet("{id}",Name ="GetMetaData")]
         public async Task<IActionResult> GetMetaData(string id)
         {
             try
@@ -133,13 +170,13 @@ namespace ImageAPI.Controllers
                 image.saveDate = DateTimeOffset.Now;
 
                 await _unitOfWork.image.InsertOne(image);
-                bool isSaved = await _fileManager.SaveFile(imgModel.file, _environment.WebRootPath, image.id);
+                bool isSaved = await _fileManager.SaveFile(imgModel.file, Path.Combine(_environment.WebRootPath,"Upload"), image.id);
                 return Ok(new { img = image, isSaved = isSaved });
             }
             catch (Exception ex)
             {
                 _iLogger.LogError(ex, "Failed to save the image!");
-                return BadRequest("Failed to save the image! Please check the logs.");
+                return BadRequest($"Failed to save the image! Please check the logs. {ex.Message}");
             }
 
         }
